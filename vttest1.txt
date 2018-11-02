@@ -1,0 +1,637 @@
+Relay-Version: version B 2.10 5/3/83; site utzoo.UUCP
+Path: utzoo!mnetor!seismo!mirror!sources-request
+From: sources-request@mirror.UUCP
+Newsgroups: mod.sources
+Subject: v07i016:  Test VT100 features, Part01/02
+Message-ID: <228@mirror.UUCP>
+Date: Tue, 2-Sep-86 17:07:43 EDT
+Article-I.D.: mirror.228
+Posted: Tue Sep  2 17:07:43 1986
+Date-Received: Tue, 2-Sep-86 21:28:23 EDT
+Sender: rs@mirror.UUCP
+Organization: Mirror Systems, Cambridge MA
+Lines: 622
+Approved: mirror!rs
+
+Submitted by: seismo!enea!suadb!lindberg (Per Lindberg QZ)
+Mod.sources: Volume 7, Issue 16
+Archive-name: vttest/Part01
+
+[  See my comments at the beginning of the README.  -r$  ]
+
+
+#!/bin/sh
+# This is a shell archive.  Remove anything before this line,
+# then unpack it by saving it in a file and typing "sh file".
+# Wrapped by mirror!rs on Tue Sep  2 17:04:20 EDT 1986
+
+# Exit status; set to 1 on "wc" errors or if would overwrite.
+STATUS=0
+# Contents:  Makefile README vttest.1 esc.c header.h
+ 
+echo x - Makefile
+if test -f Makefile ; then
+    echo Makefile exists, putting output in $$Makefile
+    OUT=$$Makefile
+    STATUS=1
+else
+    OUT=Makefile
+fi
+sed 's/^XX//' > $OUT <<'@//E*O*F Makefile//'
+XXCFLAGS	= -O
+XXOBJS	= main.o esc.o
+
+XXvttest:	$(OBJS)
+XX	cc $(CFLAGS) -o vttest $(OBJS)
+
+XXinstall: vttest
+XX	cp vttest.1 /usr/man/man1/vttest.1
+XX	cp vttest /usr/local/bin/vttest
+XX	strip /usr/local/bin/vttest
+
+XXclean:
+XX	rm -f $(OBJS) vttest foo core lint tags a.out
+@//E*O*F Makefile//
+chmod u=rw,g=rw,o=rw $OUT
+ 
+echo x - README
+if test -f README ; then
+    echo README exists, putting output in $$README
+    OUT=$$README
+    STATUS=1
+else
+    OUT=README
+fi
+sed 's/^XX//' > $OUT <<'@//E*O*F README//'
+XXNOTES FROM THE MOD.SOURCES MODERATOR:
+XXI split the source up into the three separate pieces it now is.
+XXIn doing this, I put lines like "int reading;" in a header file
+XXthat both C modules include.  If your Unix requires one of these
+XXto be "extern int reading;" then you will have some editing to do.
+XXAlso note that this program uses FIONREAD, which must be implemented
+XXdifferently in SystemV, etc., and check out the setjmp() call...
+XX	/Rich $alz
+XXOh, yeah:  I also wrote the Makefile and manpage, such as they are.
+XX-------------------------------------------------------------------
+
+XXThis is a program to test the compatibility (or to demonstrate the
+XXnon-compatibility) of so-called "VT100-compatible" terminals. In
+XXconformance of the good old hacker traditions, the only documentation
+XXof this program is the source code itself. To understand it, you also
+XXneed a copy of the original VT100 manual from DEC.
+
+XXComments and bug reports: Since this is a release (via USENET) to the
+XXwhole world, a lot of people are going to have opinions and fresh
+XXideas about it. (What -- bugs in MY program? Aww...)  I can't deal
+XXwith everyone sending me a hacked version, but if you have found a
+XXserious bug, or ported it to VMS, do tell me. I can't promise any new
+XXversion release, though. From this version on (1.7b) VTTEST will have
+XXto live its own life without its father holding its hand.
+
+XXMy adress is:
+
+XXNetwork-mail adress:     (mcvax,seismo)!enea!suadb!lindberg
+
+XXReal-world-mail address: Per Lindberg
+XX                         QZ, Stockholm University Computing Center
+XX			 Box 27322
+XX			 S - 102 54  Stockholm
+XX			 SWEDEN
+
+XXThe original version of this program is written for the Sargasso C
+XXcompiler for the DECsystem-10. Many thanks to all sales persons with
+XXquote VT100-compatible unquote terminals, who prompted me to write
+XXthis program, and also to:
+
+XX-- Bo Kleve, LIDAC, Linkoping University, Sweden
+XX   for the portation to DECSYSTEM-20 with the Sargasso C compiler
+
+XX-- Johan Widen, TTDS, Royal Institute of Technology, Stockholm, Sweden
+XX   for the portation to various UNIX systems (incl. System III and Xenix)
+
+XX-- Russ Herman, AES Data Inc., Missisauga, Ont. Canada
+XX   for fixes and code for the VT102 test
+
+XXThanx also to JMR "Gremlin" at KTH, and Goran Wallberg at QZ
+XXfor suggestions, bug fixes, etc.
+
+XXThis program does not have support for all the different variations
+XXof VT100, like VT125, VT131 nor the new VT200 series. Feel free to
+XXadd that yourself. Happy Hacking!
+
+XX                 /TMP
+@//E*O*F README//
+chmod u=rw,g=rw,o=rw $OUT
+ 
+echo x - vttest.1
+if test -f vttest.1 ; then
+    echo vttest.1 exists, putting output in $$vttest.1
+    OUT=$$vttest.1
+    STATUS=1
+else
+    OUT=vttest.1
+fi
+sed 's/^XX//' > $OUT <<'@//E*O*F vttest.1//'
+XX.TH VTTEST 1 "LOCAL"
+XX.SH NAME
+XXvttest \- test VT100-type terminal
+XX.SH SYNOPSIS
+XX.B vttest
+XX.SH DESCRIPTION
+XX.I Vttest
+XXis a program designed to test the functionality of a VT100 terminal
+XX(or emulator thereof).
+XXIt tests both display (escape sequence handling) and keyboard.
+XX.PP
+XXThe program is menu\-driven and contains full on\-line operating
+XXinstructions.
+@//E*O*F vttest.1//
+chmod u=rw,g=rw,o=rw $OUT
+ 
+echo x - esc.c
+if test -f esc.c ; then
+    echo esc.c exists, putting output in $$esc.c
+    OUT=$$esc.c
+    STATUS=1
+else
+    OUT=esc.c
+fi
+sed 's/^XX//' > $OUT <<'@//E*O*F esc.c//'
+XX#include "header.h"
+
+XXprintln(s) char *s; {
+XX  printf("%s\n", s);
+XX}
+
+XXesc(s) char *s; {
+XX  printf("%c%s", 27, s);
+XX}
+
+XXesc2(s1, s2) char s1, s2; {
+XX  printf("%c%s%s", 27, s1, s2);
+XX}
+
+XXbrcstr(ps, c) char *ps, c; {
+XX  printf("%c[%s%c", 27, ps, c);
+XX}
+
+XXbrc(pn,c) int pn; char c; {
+XX  printf("%c[%d%c", 27, pn, c);
+XX}
+
+XXbrc2(pn1, pn2 ,c) int pn1, pn2; char c; {
+XX  printf("%c[%d;%d%c", 27, pn1, pn2, c);
+XX}
+
+XXcub(pn) int pn; {  /* Cursor Backward */
+XX  brc(pn,'D');
+XX}
+XXcud(pn) int pn; {  /* Cursor Down */
+XX  brc(pn,'B');
+XX}
+XXcuf(pn) int pn; {  /* Cursor Forward */
+XX  brc(pn,'C');
+XX}
+XXcup(pn1, pn2) int pn1, pn2; {  /* Cursor Position */
+XX  brc2(pn1, pn2, 'H');
+XX}
+XXcuu(pn) int pn; {  /* Cursor Up */
+XX  brc(pn,'A');
+XX}
+XXda() {  /* Device Attributes */
+XX  brc(0,'c');
+XX}
+XXdecaln() {  /* Screen Alignment Display */
+XX  esc("#8");
+XX}
+XXdecdhl(lower) int lower; {  /* Double Height Line (also double width) */
+XX  if (lower) esc("#4");
+XX  else       esc("#3");
+XX}
+XXdecdwl() {  /* Double Wide Line */
+XX  esc("#6");
+XX}
+XXdeckpam() {  /* Keypad Application Mode */
+XX  esc("=");
+XX}
+XXdeckpnm() {  /* Keypad Numeric Mode */
+XX  esc(">");
+XX}
+XXdecll(ps) char *ps; {  /* Load LEDs */
+XX  brcstr(ps, 'q');
+XX}
+XXdecrc() {  /* Restore Cursor */
+XX  esc("8");
+XX}
+XXdecreqtparm(pn) int pn; {  /* Request Terminal Parameters */
+XX  brc(pn,'x');
+XX}
+XXdecsc() {  /* Save Cursor */
+XX  esc("7");
+XX}
+XXdecstbm(pn1, pn2) int pn1, pn2; {  /* Set Top and Bottom Margins */
+XX  if (pn1 || pn2) brc2(pn1, pn2, 'r');
+XX  else            esc("[r");
+XX  /* Good for >24-line terminals */
+XX}
+XXdecswl() {  /* Single With Line */
+XX  esc("#5");
+XX}
+XXdectst(pn) int pn; {  /* Invoke Confidence Test */
+XX  brc2(2, pn, 'y');
+XX}
+XXdsr(pn) int pn; {  /* Device Status Report */
+XX  brc(pn, 'n');
+XX}
+XXed(pn) int pn; {  /* Erase in Display */
+XX  brc(pn, 'J');
+XX}
+XXel(pn) int pn; {  /* Erase in Line */
+XX  brc(pn,'K');
+XX}
+XXhts() {  /* Horizontal Tabulation Set */
+XX  esc("H");
+XX}
+XXhvp(pn1, pn2) int pn1, pn2; {  /* Horizontal and Vertical Position */
+XX  brc2(pn1, pn2, 'f');
+XX}
+XXind() {  /* Index */
+XX  esc("D");
+XX}
+XXnel() {  /* Next Line */
+XX  esc("E");
+XX}
+XXri() {  /* Reverse Index */
+XX  esc("M");
+XX}
+XXris() { /*  Reset to Initial State */
+XX  esc("c");
+XX}
+XXrm(ps) char *ps; {  /* Reset Mode */
+XX  brcstr(ps, 'l');
+XX}
+XXscs(g,c) int g; char c; {  /* Select character Set */
+XX  printf("%c%c%c%c%c%c%c", 27, g ? ')' : '(', c,
+XX                           27, g ? '(' : ')', 'B',
+XX			   g ? 14 : 15);
+XX}
+XXsgr(ps) char *ps; {  /* Select Graphic Rendition */
+XX  brcstr(ps, 'm');
+XX}
+XXsm(ps) char *ps; {  /* Set Mode */
+XX  brcstr(ps, 'h');
+XX}
+XXtbc(pn) int pn; {  /* Tabulation Clear */
+XX  brc(pn, 'g');
+XX}
+
+XXvt52cup(l,c) int l,c; {
+XX  printf("%cY%c%c", 27, l + 31, c + 31);
+XX}
+
+XXchar inchar() {
+
+XX  /*
+XX   *   Wait until a character is typed on the terminal
+XX   *   then read it, without waiting for CR.
+XX   */
+
+XX#ifdef UNIX
+XX  int lval, waittime, getpid(); static int val; char ch;
+
+XX  fflush(stdout);
+XX  lval = val;
+XX  brkrd = 0;
+XX  reading = 1;
+XX  read(0,&ch,1);
+XX  reading = 0;
+XX  if (brkrd)
+XX    val = 0177;
+XX  else
+XX    val = ch;
+XX  if ((val==0177) && (val==lval))
+XX    kill(getpid(), (int) SIGTERM);
+XX#endif
+XX#ifdef SARG10
+XX  int val, waittime;
+
+XX  waittime = 0;
+XX  while(!uuo(051,2,&val)) {		/* TTCALL 2, (INCHRS)	*/
+XX    zleep(100);				/* Wait 0.1 seconds	*/
+XX    if ((waittime += ttymode) > 600)	/* Time-out, in case	*/
+XX      return('\177');			/* of hung in ttybin(1)	*/
+XX  }
+XX#endif
+XX#ifdef SARG20	/* try to fix a time-out function */
+XX  int val, waittime;
+
+XX  waittime = 0;
+XX  while(jsys(SIBE,2,_PRIIN) == 0) {	/* Is input empty? */
+XX    zleep(100);
+XX    if ((waittime += ttymode) > 600)
+XX      return('\177');
+XX  }
+XX  ejsys(BIN,_PRIIN);
+XX  val = jsac[2];
+XX#endif
+XX  return(val);
+XX}
+
+XXchar *instr() {
+
+XX  /*
+XX   *   Get an unfinished string from the terminal:
+XX   *   wait until a character is typed on the terminal,
+XX   *   then read it, and all other available characters.
+XX   *   Return a pointer to that string.
+XX   */
+
+
+XX  int i, val, crflag; long l1; char ch;
+XX  static char result[80];
+
+XX  i = 0;
+XX  result[i++] = inchar();
+XX/* Wait 0.1 seconds (1 second in vanilla UNIX) */
+XX#ifdef SARG10
+XX  if (trmop(01031,0) < 5) zleep(500); /* wait longer if low speed */
+XX  else                    zleep(100);
+XX#else
+XX  zleep(100);
+XX#endif
+XX#ifdef UNIX
+XX  fflush(stdout);
+XX#ifdef XENIX
+XX  while(rdchk(0)) {
+XX    read(0,result+i,1);
+XX    if (i++ == 78) break;
+XX  }
+XX#else
+XX#ifdef SIII
+XX  while(read(2,result+i,1) == 1)
+XX    if (i++ == 78) break;
+XX#else
+XX  while(ioctl(0,FIONREAD,&l1), l1 > 0L) {
+XX    while(l1-- > 0L) {
+XX      read(0,result+i,1);
+XX      if (i++ == 78) goto out1;
+XX    }
+XX  }
+XXout1:
+XX#endif
+XX#endif
+XX#endif
+XX#ifdef SARG10
+XX  while(uuo(051,2,&val)) {	/* TTCALL 2, (INCHRS)  */
+XX    if (!(val == '\012' && crflag))	/* TOPS-10 adds LF to CR */
+XX      result[i++] = val;
+XX    crflag = val == '\015';
+XX    if (i == 79) break;
+XX    zleep(50);          /* Wait 0.05 seconds */
+XX  }
+XX#endif
+XX#ifdef SARG20
+XX  while(jsys(SIBE,2,_PRIIN) != 0) {	/* read input until buffer is empty */
+XX    ejsys(BIN,_PRIIN);
+XX    result[i++] = jsac[2];
+XX    if (i == 79) break;
+XX    zleep(50);		/* Wait 0.05 seconds */
+XX  }
+XX#endif
+XX  result[i] = '\0';
+XX  return(result);
+XX}
+
+XXttybin(bin) int bin; {
+XX#ifdef SARG10
+XX  #define OPEN 050
+XX  #define IO_MOD 0000017
+XX  #define _IOPIM 2
+XX  #define _IOASC 0
+XX  #define _TOPAG 01021
+XX  #define _TOSET 01000
+
+XX  int v;
+XX  static int arglst[] = {
+XX    _IOPIM,
+XX    `TTY`,
+XX    0    
+XX  };
+XX  arglst[0] = bin ? _IOPIM : _IOASC;
+XX  v = uuo(OPEN, 1, &arglst[0]);
+XX  if (!v) { printf("OPEN failed"); exit(); }
+XX  trmop(_TOPAG + _TOSET, bin ? 0 : 1);
+XX  ttymode = bin;
+XX#endif
+XX#ifdef SARG20
+XX  /*	TTYBIN will set the line in BINARY/ASCII mode
+XX   *	BINARY mode is needed to send control characters
+XX   *	Bit 28 must be 0 (we don't flip it).
+XX   *	Bit 29 is used for the mode change.
+XX   */
+
+XX  #define _TTASC 0000100
+XX  #define _MOXOF 0000043
+
+XX  int v;
+
+XX  ejsys(RFMOD,_CTTRM);
+XX  v = ejsys(SFMOD,_CTTRM, bin ? (~_TTASC & jsac[2]) : (_TTASC | jsac[2]));
+XX  if (v) { printf("SFMOD failed"); exit(); }
+XX  v = ejsys(MTOPR,_CTTRM,_MOXOF,0);
+XX  if (v) { printf("MTOPR failed"); exit(); }
+XX#endif
+XX}
+
+XX#ifdef SARG20
+XX/*
+XX *	SUPERBIN turns off/on all input character interrupts
+XX *	This affects ^C, ^O, ^T
+XX *	Beware where and how you use it !!!!!!!
+XX */
+
+XXsuperbin(bin) int bin; {
+XX  int v;
+
+XX  v = ejsys(STIW,(0//-5), bin ? 0 : -1);
+XX  if (v) { printf("STIW superbinary setting failed"); exit(); }
+XX  ttymode = bin;
+XX}
+
+XX/*
+XX *	PAGE affects the ^S/^Q handshake.
+XX *	Set bit 34 to turn it on. Clear it for off.
+XX */
+
+XXpage(bin) int bin; {
+XX  int v;
+
+XX  #define TT_PGM 0000002
+
+XX  ejsys(RFMOD,_CTTRM);	/* Get the current terminal status */
+XX  v = ejsys(STPAR,_CTTRM, bin ? (TT_PGM | jsac[2]) : (~TT_PGM & jsac[2]));
+XX  if (v) { printf("STPAR failed"); exit(); }
+XX}
+XX#endif
+
+XXtrmop(fc,arg) int fc, arg; {
+XX#ifdef SARG10
+XX  int retvalp;
+XX  int arglst[3];
+
+XX  /* TRMOP is a TOPS-10 monitor call that does things to the terminal. */
+
+XX  /* Find out TTY nbr (PA1050 barfs if TRMOP get -1 instead of udx)    */
+XX  /* A TRMNO monitor call returns the udx (Universal Device Index)     */
+
+XX  arglst[0] = fc;		/* function code	*/
+XX  arglst[1] = calli(0115, -1);	/* udx, TRMNO. UUO	*/
+XX  arglst[2] = arg;		/* Optional argument	*/
+
+XX  if (calli(0116, 3 // &arglst[0], &retvalp))           /* TRMOP. UUO */
+XX  return (retvalp);
+XX  else {
+XX    printf("?Error return in TRMOP.");
+XX    exit();
+XX  }
+XX#endif
+XX}
+
+XXinputline(s) char *s; {
+XX  scanf("%s",s);
+XX#ifdef SARG10
+XX  readnl();
+XX#endif
+XX#ifdef SARG20
+XX  readnl();
+XX#endif
+XX}
+
+XXinflush() {
+
+XX  /*
+XX   *   Flush input buffer, make sure no pending input character
+XX   */
+
+XX  int val;
+
+XX#ifdef UNIX
+XX#ifdef XENIX
+XX  while(rdchk(0)) read(0,&val,1);
+XX#else
+XX#ifdef SIII
+XX  while(read(2,&val,1));
+XX#else
+XX  long l1;
+XX  ioctl (0, FIONREAD, &l1);
+XX  while(l1-- > 0L) read(0,&val,1);
+XX#endif
+XX#endif
+XX#endif
+XX#ifdef SARG10
+XX  while(uuo(051,2,&val))	/* TTCALL 2, (INCHRS)  */
+XX    ;
+XX#endif
+XX#ifdef SARG20
+XX  ejsys(CFIBF,_PRIIN);		/* Clear input buffer */
+XX#endif
+XX}
+
+XXzleep(t) int t; {
+
+XX/*
+XX *    Sleep and do nothing (don't waste CPU) for t milliseconds
+XX */
+
+XX#ifdef SARG10
+XX  calli(072,t);		/* (HIBER) t milliseconds */
+XX#endif
+XX#ifdef SARG20
+XX  ejsys(DISMS,t);	/* DISMISS for t milliseconds */
+XX#endif
+XX#ifdef UNIX
+XX  t = t / 1000;
+XX  if (t == 0) t = 1;
+XX  sleep(t);		/* UNIX can only sleep whole seconds */
+XX#endif
+XX}
+@//E*O*F esc.c//
+chmod u=rw,g=rw,o=rw $OUT
+ 
+echo x - header.h
+if test -f header.h ; then
+    echo header.h exists, putting output in $$header.h
+    OUT=$$header.h
+    STATUS=1
+else
+    OUT=header.h
+fi
+sed 's/^XX//' > $OUT <<'@//E*O*F header.h//'
+XX#define VERSION "1.7b 1985-04-19"
+
+XX/* Choose one of these */
+
+XX/* #define XENIX        /* XENIX implies UNIX                           */
+XX/* #define SIII         /* SIII  implies UNIX, (NDELAY a la System III) */
+XX#define UNIX            /* UNIX                                         */
+XX/* #define VMS          /* VMS not done yet -- send me your version!!!! */
+XX/* #define SARG20       /* Sargasso C for TOPS-20                       */
+XX/* #define SARG10       /* Sargasso C for TOPS-10                       */
+
+XX/* These #ifdef:s are implementation dependent stuff for the Sargasso C */
+XX/* Unix C barfs on directives like "#strings", so we keep them	        */
+XX/* indented. Then unix c can't find them, but Sargasso C *can*.		*/
+XX/* Admittedly kludgey, but it works...)					*/
+XX#ifdef SARG10
+XX  #define _UNIXCON  /* Make UNIX-flavored I/O on TOPS */
+XX  #strings low      /* put strings in lowseg mem so we can modify them. */
+XX#endif
+XX#ifdef SARG20
+XX  #define _UNIXCON  /* Make UNIX-flavored I/O on TOPS */
+XX  #strings low      /* put strings in lowseg mem so we can modify them. */
+XX  #include <TOPS20.HDR>
+XX#endif
+
+XX#include <stdio.h>
+
+
+XX#ifdef UNIX
+XX#include <ctype.h>
+XX#include <sgtty.h>
+XX#include <signal.h>
+XX#include <setjmp.h>
+XXjmp_buf intrenv;
+XXstruct sgttyb sgttyOrg, sgttyNew;
+XXchar stdioBuf[BUFSIZ];
+XXint brkrd, reading;
+XXextern onterm(), onbrk();
+XX#ifdef SIII
+XX#include <fcntl.h>
+XX#endif
+XX#endif
+XXint ttymode;
+@//E*O*F header.h//
+chmod u=rw,g=rw,o=rw $OUT
+ 
+echo Inspecting for damage in transit...
+temp=/tmp/sharin$$; dtemp=/tmp/sharout$$
+trap "rm -f $temp $dtemp; exit" 0 1 2 3 15
+cat > $temp <<\!!!
+      13      34     251 Makefile
+      57     396    2484 README
+      13      54     351 vttest.1
+     398    1302    8060 esc.c
+      43     201    1397 header.h
+     524    1987   12543 total
+!!!
+wc  Makefile README vttest.1 esc.c header.h | sed 's=[^ ]*/==' | diff -b $temp - >$dtemp
+if test -s $dtemp ; then
+    echo "Ouch [diff of wc output]:"
+    cat $dtemp
+    STATUS=1
+elif test $STATUS = 0 ; then
+    echo "No problems found."
+else
+    echo "WARNING -- PROBLEMS WERE FOUND..."
+fi
+exit $STATUS
